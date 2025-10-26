@@ -1,4 +1,4 @@
-Dynamic Image Slider1
+Dynamic Image Slider
           A full-stack project that demonstrates a responsive image slider with backend support for user authentication and product management.
 Table of Contents
 •	About
