@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>IBM Store — Demo</title>
 <style>
+/* --- Style block, do not change this --- */
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:Arial,sans-serif;background:#f0f2f5;color:#333;}
 .hidden{display:none;}
@@ -51,6 +52,8 @@ button:hover{background:#0056b3;}
 </style>
 </head>
 <body>
+
+<!-- LOGIN PAGE -->
 <div id="loginPage" class="login-container">
   <h2>IBM Store Login</h2>
   <form id="loginForm" class="form active">
@@ -63,6 +66,8 @@ button:hover{background:#0056b3;}
     <button id="showSignupBtn" type="button" style="background:#6c757d;">Sign Up</button>
   </p>
 </div>
+
+<!-- SIGNUP PAGE -->
 <div id="signupPage" class="login-container hidden">
   <h2>IBM Store Signup</h2>
   <form id="signupForm" class="form">
@@ -76,6 +81,8 @@ button:hover{background:#0056b3;}
     <button id="showLoginBtn" type="button" style="background:#6c757d;">Log In</button>
   </p>
 </div>
+
+<!-- HOME PAGE -->
 <div id="homePage" class="hidden">
   <div class="navbar">
     <div class="logo">IBM Store</div>
@@ -117,6 +124,8 @@ button:hover{background:#0056b3;}
     <div id="productList" class="product-grid"></div>
   </section>
 </div>
+
+<!-- PRODUCT DETAIL PAGE -->
 <div id="productDetailPage" class="hidden">
   <button onclick="backToHome()" class="back-btn">← Back</button>
   <h2 id="detailName"></h2>
@@ -133,6 +142,8 @@ button:hover{background:#0056b3;}
   <p><strong>Price:</strong> ₹<span id="detailPrice"></span></p>
   <button onclick="addToCart()">Add to Cart</button>
 </div>
+
+<!-- CART PAGE -->
 <div id="cartPage" class="hidden">
   <button onclick="backToHome()" class="back-btn">← Back to Home</button>
   <h2>Shopping Cart</h2>
@@ -140,14 +151,19 @@ button:hover{background:#0056b3;}
   <div class="center">Total: ₹<span id="cartTotal">0</span></div>
   <div class="center"><button onclick="Buy()">Buy</button></div>
 </div>
+
+<!-- ORDER HISTORY PAGE -->
 <div id="orderHistoryPage" class="hidden">
   <button onclick="backToHome()" class="back-btn">← Back to Home</button>
   <h2>📦 My Order</h2>
   <div id="orderList"></div>
 </div>
+
 <script>
 let currentUser = "", cart = [], currentProduct = null, currentSlide = 0;
 let token = localStorage.getItem("ibm_token") || "";
+
+
 const loginPage = document.getElementById("loginPage");
 const signupPage = document.getElementById("signupPage");
 const homePage = document.getElementById("homePage");
@@ -163,8 +179,12 @@ const cartCountEl = document.getElementById("cartCount");
 const slideIndicator = document.getElementById("slideIndicator");
 const thumbnailContainer = document.getElementById("thumbnailContainer");
 const searchBar = document.getElementById("searchBar");
+
+// base URL of your backend on Render
+const API_BASE = "https://dynamic-image-slider1.onrender.com";
+
 const products = [
-  {id:1,name:"Laptop",desc:"High performance laptop",price:60000,images:[
+  {id:1,name:"Laptop",desc:"High performance laptop",price:60000,images:[
     "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcQkwGBWvuL9Jofdx2iWsulxSUi9LOqhdm4ubPgkegrfwJ_8-xGVtWYOWhx0i--XYMEUkwf3-ZLwTjZg68Et8hvIUu8KT_C6JyntNR9Ka-ZBSUAUPGMr1ajs",
     "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcT8NK0g9xVj1kWhYeIo-pj7NN2O232LdTKs59UFrjLnG_rvzWUDEuqLuispGjRN8VZnxZdTAANOED5Jcs6sjxipKJ2E3LXfNPdFgjc9VvOE1fvnvutODb4",
     "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcQ-MPH-mHiccCECDJR4FhnOIIkgu7wMlPAkapNts6KIyQgSFTKVvHehZilr11wqLjAEqaYB61Bc8HZbX8XshCS2ruMaPrNCiOGfz32zBNiuI2I0V1tVzC-t"], category:"Computers"},
@@ -183,7 +203,10 @@ const products = [
   {id:14,name:"Power Bank",desc:"10000mAh fast charging",price:1500,images:["https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcTYv-qiPyM0QntkGcGGa56zoQ5-9bF7sKytnwn8ukmzXU_fX8sLDLJ7wcbutq12Di-izV9ZdiTHnH5UR01ParFk6i9-U12wfWqieCMEEW4bdPbiQEqE9ooqplE","https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcS3cUw2pIWxRS5wYe0miC3lOlVOs-eTqJe0BIIS7T_9xdTh6XHiqvLQvuR4rgwEQ2CPXIvs4QDNf-TpVHiBZFlQFd5m4aT_p6a8lXCEI6gUwfZBWLIlEi7fzA","https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcRHEdS5tvKawYiog44Fy9kv_qi9rdN3Kd1UUjJ7jo7MueERZH4gwHQ92_SE9MftwQjkvO3U0Od9dhnmg1Odp07Mdd6mKvIaLdJLgXbDASEr7Mlhemt4mpTT","https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTbvIdxgsUNM4KSqkc39vNQsJ-1d_1Kcph9A7IoKzvU8Uj-kdXg7FDJ9yiBVVgrJu0-bhyMuJ6Gwfgf7WBhZYeiXwg8maJzJBcE1Xddt8zW-aaZHnaQuxgY","https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcQeY2BGyjv-zi_Pea_IVPgAnCDH7Pl0gb2a8dOKgcH-PHsOPmTZ92R-6jQBK2Th39W-KAoigTl2NzxEkmC7Lczd6GltgY_hkYKkRmLP74OC"],category:"Accessories"},
   {id:15,name:"TV",desc:"55 inch 4K Smart TV",price:65000,images:["https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTrOxXhp3X1zJUxeFSnbDBFOge0P6IGVCrwcaP0XY4E1vwZu3uVDFCGITUowtdEv2OHXIcz4rk39_WZgDCkCH4ehMHL01jqTgp3MLrdpyx6w1y8jaoAhKjm","https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcQadtHKAexEaIAJaJuaz39p5tbnVZM--FtSUrhUrjiPU-VGlxfLQGXnGYFUa8b-PfxIk9AanZct_WO5O_bbtt3fIybGyFbprGBxlilJY7uPJa4gXRPK6XAJmQ","https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcRD0f2dQY-wbgwnJwOHnUG_xcul6h0KWq-8tZaZ_xZ6hyaeG_EkuH4g2Ywtg6uleSnA4SCQQtL4IbifDKUxHPaYDVn-m-Zw4T3P_2BY_nqLWqM0F_BuoQwh","https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRdMA8ReefLy7fqrqvIWS8u_ft42sLhIUSN7L-NjtMQbZ1W3TLtMLkq1LkUoqr6Mr0A8FcI-gG5ounqLF0aySYhI9TzadnBCj_2DlT1owP3"],category:"Electronics"},
   {id:16,name:"Air Conditioner",desc:"Energy efficient AC",price:40000,images:["https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcSuUPJg_2Cd3PSY25tqf8RSuGknb56IatWldGX-LZwgBhG8oeZrnXlqf-eYxcAsafABhX7QIMjff9AEzGBqTTqjpqlwsHsVU9fCF6cYaqzf94wXHe6uoR2j","https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcTssKvlcZmCveS8u_GtI9xF7zwT-CToV_EXukjoWaj1oDqL3YV2LnUIpdzYHikonToxRNKIwCCBZk1j-LotocvxkRy-4OPoXxtqk8f0M45tw17m_jvTQva_Ow","https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcSZlLf4RaTJtoP8YY1zoO3ZMPjvlHLqLbW630n2hI19TeT6G25-taz4ngahP75Q6BKEVkWQOD5PjCqxXyDG9QHJLs95KWddnAbaQbVnofMO","https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcRNoemFJlHURlf8HyvuGVVgvgfmgvI7hbauZF0SxD_11VvB1L4_eb0y2ziuo8GHKnxZGo0mwhxLVH9VS4yVHSTjrhIbo8agIsCOQ7rf8dHJXajAkw-Ac0XD","https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcSbyrHhs5fQbHOr9j80VqWZWjT7x4LTGnLF2yC_TKp4aGFcoqVqn7InDhqihyvcIED7pHsiMsr9WAVeJfdIL5lce3yGx4RKUfN6zKqOicnH","https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcQNps829aKkKbnLtdIMhxeYW9pLx0ajxIeO_PiSAggeCwnvXsby9USkazr0BkHmTd331GXw1L_zDxR-dJMcP2NCf6viSsYPYOeuq8p9MMU"],category:"Appliances"}
+ // For brevity, not included again. Use your full products array here.
 ];
+
+
 function hideAllPages() {
   loginPage.classList.add("hidden");
   signupPage.classList.add("hidden");
@@ -194,13 +217,14 @@ function hideAllPages() {
 }
 function showLogin() { hideAllPages(); loginPage.classList.remove("hidden"); }
 function showSignup() { hideAllPages(); signupPage.classList.remove("hidden"); }
+
 async function login(e) {
   e.preventDefault();
   let email = document.getElementById("loginEmail").value.trim();
   let pass = document.getElementById("loginPassword").value.trim();
   if(email && pass) {
     try {
-      const res = await fetch('http://localhost:5500/api/auth/login', {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass })
@@ -224,6 +248,7 @@ async function login(e) {
     alert("Enter email and password!");
   }
 }
+
 async function signup(e) {
   e.preventDefault();
   let name = document.getElementById("signupName").value.trim();
@@ -231,7 +256,7 @@ async function signup(e) {
   let pass = document.getElementById("signupPassword").value.trim();
   if(name && email && pass) {
     try {
-      const res = await fetch('http://localhost:5500/api/auth/register', {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password: pass })
@@ -250,6 +275,7 @@ async function signup(e) {
     alert("Please fill all fields!");
   }
 }
+
 function logout() {
   currentUser = "";
   cart = [];
@@ -264,6 +290,7 @@ document.getElementById("showSignupBtn").addEventListener("click", showSignup);
 document.getElementById("showLoginBtn").addEventListener("click", showLogin);
 
 showLogin();
+
 function renderProducts(productsToRender){
   productList.innerHTML="";
   const arr = productsToRender || products;
@@ -305,6 +332,8 @@ function updateThumbnailHighlight(){ const imgs = thumbnailContainer.querySelect
 function backToHome(){ hideAllPages(); homePage.classList.remove("hidden"); renderProducts(); }
 function addToCart(){ if(!currentProduct) return; const existing=cart.find(c=>c.id===currentProduct.id); if(existing) existing.qty++; else cart.push({...currentProduct,qty:1}); updateCartCount(); alert("Added to cart!"); }
 function updateCartCount(){ cartCountEl.textContent=cart.reduce((a,b)=>a+b.qty,0); }
+
+// --- CART & ORDER TO DATABASE ---
 async function Buy() {
   if(cart.length === 0) {
     alert("Cart is empty!");
@@ -312,7 +341,7 @@ async function Buy() {
   }
   const total = cart.reduce((a,b) => a + b.price*b.qty, 0);
   try {
-    const res = await fetch('http://localhost:5500/api/orders', {
+    const res = await fetch(`${API_BASE}/api/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ items: cart.map(item => ({
@@ -333,11 +362,13 @@ async function Buy() {
     alert("Network error during order.");
   }
 }
+
+// --- ORDER HISTORY from MongoDB (with Cancel Button!) ---
 async function showOrders() {
   hideAllPages();
   orderHistoryPage.classList.remove("hidden");
   try {
-    const res = await fetch('http://localhost:5500/api/orders', {
+    const res = await fetch(`${API_BASE}/api/orders`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
     const data = await res.json();
@@ -361,17 +392,19 @@ async function showOrders() {
     document.getElementById("orderList").textContent = "Could not load order history.";
   }
 }
+
+// --- CANCEL ORDER function ---
 async function cancelOrder(orderId) {
   if (!confirm("Are you sure you want to cancel this order?")) return;
   try {
-    const res = await fetch(`http://localhost:5500/api/orders/${orderId}`, {
+    const res = await fetch(`${API_BASE}/api/orders/${orderId}`, {
       method: "DELETE",
       headers: { "Authorization": "Bearer " + token }
     });
     const data = await res.json();
     if (res.ok) {
       alert("Order cancelled!");
-      showOrders();
+      showOrders(); // Refresh order list
     } else {
       alert("Error cancelling order: " + data.msg);
     }
@@ -379,6 +412,8 @@ async function cancelOrder(orderId) {
     alert("Network error!");
   }
 }
+
+// --- CART VIEW & UPDATE ---
 function showCart(){
   hideAllPages(); cartPageDiv.classList.remove("hidden");
   const cartItemsDiv=document.getElementById("cartItems"); cartItemsDiv.innerHTML=""; let total=0;
@@ -403,4 +438,3 @@ function removeCartItem(index){ cart.splice(index,1); showCart(); updateCartCoun
 </script>
 </body>
 </html>
-
